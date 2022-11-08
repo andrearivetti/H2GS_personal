@@ -7,7 +7,9 @@ define(['N/search', 'N/currency'], function(search, currency) {
     const costCenterFieldId = 'department';
 
     // This workflow action it's executed in the workflow stages:
-    // - Determine Cost Center of the workflow [H2GS][AF] Purchase Requisition Approval // TODO other usages after implementation
+    // - Determine Cost Center of the workflow [H2GS][AF] Purchase Requisition Approval
+    // - Determine Cost Center of the workflow [H2GS][AF] Purchase Order Approval
+
     // the action it's executed before submitting the record, both in create / edit event
 
     // the goal of the entry point it's to determine the cost center that will drive the approval
@@ -17,7 +19,7 @@ define(['N/search', 'N/currency'], function(search, currency) {
     // and the workflow will stay in the stage Pending Cost Center Selection
     function _handleWFAction(scriptContext) {
         log.audit({
-            title: '_handleWFAction',
+            title: '_handleWFAction determineCostCenter',
             details: 'start'
         });
 
@@ -28,7 +30,7 @@ define(['N/search', 'N/currency'], function(search, currency) {
         const recordId = newRecord.id;
 
         log.audit({
-            title: '_handleWFAction core',
+            title: '_handleWFAction determineCostCenter',
             details: 'workflowId: ' + workflowId + ' eventType: ' + eventType + ' recordId: ' + recordId
         });
 
@@ -37,13 +39,13 @@ define(['N/search', 'N/currency'], function(search, currency) {
         if(costCenterId){
             newRecord.setValue('custbody_h2gs_af_cc_for_approvals', costCenterId)
             log.audit({
-                title: '_handleWFAction',
+                title: '_handleWFAction determineCostCenter',
                 details: 'set cost center as: ' + costCenterId
             });
         }
 
         log.audit({
-            title: '_handleWFAction',
+            title: '_handleWFAction determineCostCenter',
             details: 'end, return costCenterId: ' + costCenterId
         });
 
@@ -74,6 +76,7 @@ define(['N/search', 'N/currency'], function(search, currency) {
 
         switch (recordType){
             case 'purchreq':
+            case 'purchord':
                 // get most used CostCenter from expenses and item sublist
                 var MostUsedExpensesCostCenter = _getMostUsedCostCenterFromSublist('expense',newRecord);
                 var MostUsedItemsCostCenter = _getMostUsedCostCenterFromSublist('item',newRecord);
