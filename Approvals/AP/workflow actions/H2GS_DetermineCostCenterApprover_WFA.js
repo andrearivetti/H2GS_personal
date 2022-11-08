@@ -9,7 +9,7 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
     const approvalCurrency = 1; // SEK since there is no currency in the approval limit field we are assuming we will configure all employees approval limits in SEK
 
     // This workflow action it's executed in the workflow stages:
-    // - Determine Cost Center Approver of the workflow [H2GS][AF] Purchase Requisition Approval // TODO other usages after implementation
+    // - Determine Cost Center Approver of the workflow [H2GS][AF] Purchase Requisition Approval
     // the action it's executed before submitting the record, both in create / edit event
 
     var GLB_escalationLog = '';
@@ -525,7 +525,7 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
         });
 
         // TODO better to replace the variable approvalAmount with approvalAmountSEK for better code reading in other functions
-        // running against time so adding the TODO
+        // running against time so adding the reminder
         approvalAmount = approvalAmountSEK;
 
         var nextApprover = null;
