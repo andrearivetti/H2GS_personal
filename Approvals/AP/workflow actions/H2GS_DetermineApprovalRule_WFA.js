@@ -14,12 +14,12 @@ define(['N/search', 'N/currency'], function(search, currency) {
 
     // the goal of the entry point it's to determine the cost center that will drive the approval
     // loop all items and expenses lines reading the selected cost center and store in the field
-    // [H2G][AF] APPROVAL COST CENTER custbody_h2gs_af_cc_for_approvals the value of the determined cost center
+    // [H2G][AF] APPROVAL COST CENTER custbody_h2gs_af_approvalrule the value of the determined cost center
     // if it's not possible to determine a cost center (not used in both sublists) then we will not set any value in that field
     // and the workflow will stay in the stage Pending Cost Center Selection
     function _handleWFAction(scriptContext) {
         log.audit({
-            title: '_handleWFAction determineCostCenter',
+            title: '_handleWFAction approvalRuleId',
             details: 'start'
         });
 
@@ -30,28 +30,124 @@ define(['N/search', 'N/currency'], function(search, currency) {
         const recordId = newRecord.id;
 
         log.audit({
-            title: '_handleWFAction determineCostCenter',
+            title: '_handleWFAction approvalRuleId',
             details: 'workflowId: ' + workflowId + ' eventType: ' + eventType + ' recordId: ' + recordId
         });
 
-        var costCenterId = _determineApprovalCostCenter(newRecord);
+        // Change in scope. We are now determining an approval rule given the header department and branch (location)
+        // instead of the most used cost center
+        //var costCenterId = _determineApprovalCostCenter(newRecord);
+        const recordType = newRecord.getValue('type');
 
-        if(costCenterId){
-            newRecord.setValue('custbody_h2gs_af_cc_for_approvals', costCenterId)
+        if (recordType){
+            var approvalRuleId = _determineApprovalRuleForTransactionType(newRecord, recordType)
+
             log.audit({
-                title: '_handleWFAction determineCostCenter',
-                details: 'set cost center as: ' + costCenterId
+                title: '_handleWFAction approvalRuleId',
+                details: 'got approvalRuleId: ' + approvalRuleId
             });
+
+            if(approvalRuleId){
+                log.audit({
+                    title: '_handleWFAction approvalRuleId',
+                    details: 'setting approvalRuleId: ' + approvalRuleId
+                });
+
+                newRecord.setValue('custbody_h2gs_af_approvalrule', approvalRuleId)
+            }
         }
 
         log.audit({
-            title: '_handleWFAction determineCostCenter',
-            details: 'end, return costCenterId: ' + costCenterId
+            title: '_handleWFAction approvalRuleId',
+            details: 'end, return approvalRuleId: ' + approvalRuleId
         });
 
-        return costCenterId;
+        return approvalRuleId;
 
     }
+
+    function _determineApprovalRuleForTransactionType(newRecord, recordType) {
+
+        log.audit({
+            title: '_determineApprovalRuleForTransactionType',
+            details: 'recordType: ' + recordType
+        });
+
+        switch (recordType){
+            case 'purchreq':
+            case 'purchord':
+                var approvalRuleId = _getApprovalRuleGeneric(newRecord);
+                break;
+        }
+
+        return approvalRuleId;
+
+    }
+
+    function _getApprovalRuleGeneric(newRecord) {
+        var approvalRuleId = null;
+
+        const departmentId = newRecord.getValue('department');
+        const locationId = newRecord.getValue('location');
+
+        log.debug({
+            title: '_getApprovalRuleGeneric',
+            details: 'departmentId: ' + departmentId
+        });
+
+        log.debug({
+            title: '_getApprovalRuleGeneric',
+            details: 'locationId: ' + locationId
+        });
+
+        if ((departmentId) && (locationId)){
+            var ApprovalRuleSearchObj = search.create({
+                type: 'customrecord_h2gf_af_approval_rule',
+                filters: [
+                        ["custrecordd_h2gf_af_ar_department","anyof",departmentId],
+                        "AND",
+                        ["custrecordd_h2gf_af_ar_location","anyof",locationId]
+                    ],
+                columns:
+                    [
+                        search.createColumn({name: "internalid"}),
+                        search.createColumn({name: "name"}),
+                    ]
+            });
+
+            var ApprovalRuleSearchObjCount = ApprovalRuleSearchObj.runPaged().count;
+
+            log.debug({
+                title: '_getApprovalRuleGeneric',
+                details: 'ApprovalRuleSearchObjCount search rules result count: ' + ApprovalRuleSearchObjCount
+            });
+
+            var approvalRuleRes = null;
+            ApprovalRuleSearchObj.run().each(function(result){
+                // .run().each has a limit of 4,000 results
+
+                approvalRuleRes = result.getValue({
+                    name: 'internalid'
+                });
+
+                if (approvalRuleRes){
+                    approvalRuleId = approvalRuleRes;
+                }
+
+                return true;
+            });
+        }
+
+        log.debug({
+            title: '_getApprovalRuleGeneric',
+            details: 'returning: ' + approvalRuleId
+        });
+
+        return approvalRuleId
+    }
+
+    // DEPRECATED FUNCTIONS, KEEPING THEM FOR CV PURPOSE AND UNTILL IT WILL NOT BE FULLY TESTED / APPROVED
+    // IN CASE ANYTHING WE DID PREVIOUSLY WILL BE NEEDED
 
     function _determineApprovalCostCenter(newRecord) {
         // determine the type of the record since this function will be shared across multiple
@@ -60,17 +156,19 @@ define(['N/search', 'N/currency'], function(search, currency) {
         var costCenterId = null;
         const recordType = newRecord.getValue('type');
 
-        costCenterId = _determineApprovalCostCenterForTransactionType(newRecord, recordType)
+        costCenterId = _determineApprovalCostCenterForTransactionType_Sublist(newRecord, recordType)
 
         return costCenterId;
 
     }
 
     // determine the approval cost center for a specific transaction type
-    function _determineApprovalCostCenterForTransactionType(newRecord, recordType) {
+    // deprecating this function since now the "most used cost center" is no longer got from
+    // lines most used department. It will be a combination of header department and location
+    function _determineApprovalCostCenterForTransactionType_Sublist(newRecord, recordType) {
 
         log.audit({
-            title: '_determineApprovalCostCenterForTransactionType',
+            title: '_determineApprovalCostCenterForTransactionType_Sublist',
             details: 'recordType: ' + recordType
         });
 
@@ -82,12 +180,12 @@ define(['N/search', 'N/currency'], function(search, currency) {
                 var MostUsedItemsCostCenter = _getMostUsedCostCenterFromSublist('item',newRecord);
 
                 log.audit({
-                    title: '_determineApprovalCostCenterForTransactionType',
+                    title: '_determineApprovalCostCenterForTransactionType_Sublist',
                     details: 'mostUsedExpensesCostCenter: ' + JSON.stringify(MostUsedExpensesCostCenter)
                 });
 
                 log.audit({
-                    title: '_determineApprovalCostCenterForTransactionType',
+                    title: '_determineApprovalCostCenterForTransactionType_Sublist',
                     details: 'mostUsedItemsCostCenter: ' + JSON.stringify(MostUsedItemsCostCenter)
                 });
 
@@ -97,14 +195,14 @@ define(['N/search', 'N/currency'], function(search, currency) {
                 if (MostUsedItemsCostCenter || MostUsedExpensesCostCenter){
 
                     log.audit({
-                        title: '_determineApprovalCostCenterForTransactionType',
+                        title: '_determineApprovalCostCenterForTransactionType_Sublist',
                         details: 'item or expenses sublist its containing at least 1 cost center'
                     });
 
                     if (!MostUsedItemsCostCenter){
 
                         log.audit({
-                            title: '_determineApprovalCostCenterForTransactionType',
+                            title: '_determineApprovalCostCenterForTransactionType_Sublist',
                             details: 'no cost centers used in items sublist, returning expenses CostCenter: ' + MostUsedExpensesCostCenter.CostCenterId
                         });
 
@@ -113,7 +211,7 @@ define(['N/search', 'N/currency'], function(search, currency) {
                         if (!MostUsedExpensesCostCenter){
 
                             log.audit({
-                                title: '_determineApprovalCostCenterForTransactionType',
+                                title: '_determineApprovalCostCenterForTransactionType_Sublist',
                                 details: 'no cost centers used in expenses sublist, returning items CostCenter: ' + MostUsedItemsCostCenter.CostCenterId
                             });
 
@@ -122,14 +220,14 @@ define(['N/search', 'N/currency'], function(search, currency) {
 
                             if (MostUsedItemsCostCenter.usage >= MostUsedExpensesCostCenter.usage){
                                 log.audit({
-                                    title: '_determineApprovalCostCenterForTransactionType',
+                                    title: '_determineApprovalCostCenterForTransactionType_Sublist',
                                     details: 'cost centers used in both expenses and items sublist, returning the most used from items: ' + MostUsedItemsCostCenter.CostCenterId
                                 });
 
                                 return MostUsedItemsCostCenter.CostCenterId;
                             } else {
                                 log.audit({
-                                    title: '_determineApprovalCostCenterForTransactionType',
+                                    title: '_determineApprovalCostCenterForTransactionType_Sublist',
                                     details: 'cost centers used in both expenses and items sublist, returning the most used from expenses: ' + MostUsedExpensesCostCenter.CostCenterId
                                 });
 
@@ -216,6 +314,8 @@ define(['N/search', 'N/currency'], function(search, currency) {
 
         return mostUsedCostCenter;
     }
+    // END OF DEPRECATED FUNCTIONS
+
 
     return {
         onAction: _handleWFAction
