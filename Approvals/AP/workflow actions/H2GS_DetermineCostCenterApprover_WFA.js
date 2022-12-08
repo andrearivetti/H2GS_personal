@@ -578,7 +578,7 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
                     details: 'its a purchase order, checking approval type: ' + approvalType
                 });
 
-                if ((approvalType == '1') || (approvalType == '5')){ // 1: PurchaseRequisitionFlow, 5: PurchaseRequisitionAndContractFlow
+                if ((approvalType == '1') || (approvalType == '2') || (approvalType == '5')){ // 1: PurchaseRequisitionFlow, 5: PurchaseRequisitionAndContractFlow
 
                     log.audit({
                         title: '_allLevelsApproving',
