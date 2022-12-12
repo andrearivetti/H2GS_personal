@@ -76,6 +76,7 @@ define(['N/search', 'N/currency'], function(search, currency) {
         switch (recordType){
             case 'purchreq':
             case 'purchord':
+            case 'vendbill':
                 var approvalRuleId = _getApprovalRuleGeneric(newRecord);
                 break;
         }

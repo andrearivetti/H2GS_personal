@@ -61,7 +61,7 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
             details: 'AllLevelsAllApproving: ' + AllLevelsAllApproving + ' purchaser: ' + purchaser + ' currentApprover: ' + currentApprover + ' approvalCostCenterRuleId: ' + approvalCostCenterRuleId
         });
 
-        var recordDataBlockingIssue = _determineRecordDataBlockingIssue(approvalCostCenterRuleId,recordType, purchaser);
+        var recordDataBlockingIssue = _determineRecordDataBlockingIssue(approvalCostCenterRuleId,recordType, purchaser, newRecord);
 
         log.audit({
             title: '_handleWFAction core',
@@ -327,7 +327,7 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
         return approvalAmountSEK
     };
 
-    function _determineRecordDataBlockingIssue(approvalCostCenterRuleId,recordType, purchaser){
+    function _determineRecordDataBlockingIssue(approvalCostCenterRuleId,recordType, purchaser, newRecord){
         var dataBlockingIssue = false;
         if (!approvalCostCenterRuleId){
 
