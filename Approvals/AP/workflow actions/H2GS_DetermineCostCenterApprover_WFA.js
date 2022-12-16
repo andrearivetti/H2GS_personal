@@ -597,6 +597,26 @@ define(['N/search', 'N/currency'], function(search, N_currency) {
                 }
 
 
+            } else {
+                if (recordType == 'vendbill'){
+                    if ((approvalType == '1') || (approvalType == '2') || (approvalType == '3') || (approvalType == '5') || (approvalType == '6')){ // 1: PurchaseRequisitionFlow, 5: PurchaseRequisitionAndContractFlow
+
+                        log.audit({
+                            title: '_allLevelsApproving',
+                            details: 'there is another purhcasing transaction approved before the vendor bill: ' + approvalType
+                        });
+
+                        allLevelsWillApprove = false;  // useless since its declared true. Right now I prefer to keep the default as TRUE instead of null since I will add explicit logs in the useless branch either way
+                    } else {
+
+                        log.audit({
+                            title: '_allLevelsApproving',
+                            details: 'free vendor bill: ' + approvalType
+                        });
+
+                        allLevelsWillApprove = true;
+                    }
+                }
             }
         }
 
