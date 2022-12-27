@@ -10,7 +10,65 @@ define(['N/record', "N/search", 'N/runtime'],
      */
     function(recordModule,searchModule, runtimeModule) {
 
-        const testFromUIActive = false;
+        const testFromUIActive = true;
+
+        function _handleRest_BL(scriptContext) {
+
+            var fieldsToSetADefaultFor = {};
+            fieldsToSetADefaultFor['item'] = [];
+            fieldsToSetADefaultFor['item'].push({
+                targetFieldId: 'taxschedule',
+                defaultValue: '2'
+            });
+
+            var form = scriptContext.form
+            var newRecord = scriptContext.newRecord;
+
+            if (form){
+                const recordType = newRecord.getValue('type');
+
+                if (typeof fieldsToSetADefaultFor[recordType] != 'undefined'){
+                    if (typeof fieldsToSetADefaultFor[recordType].length != 'undefined'){
+                        var currentFieldConfig;
+                        for (var iCountfieldsToSetADefaultForForRecordType = 0; iCountfieldsToSetADefaultForForRecordType < fieldsToSetADefaultFor[recordType].length ; iCountfieldsToSetADefaultForForRecordType++){
+                            currentFieldConfig = fieldsToSetADefaultFor[recordType][iCountfieldsToSetADefaultForForRecordType];
+
+                            if ((currentFieldConfig.targetFieldId) && (currentFieldConfig.defaultValue)){
+
+                                if (!newRecord.getValue(currentFieldConfig.targetFieldId)){
+
+                                    log.audit({
+                                        title: '_handleRest',
+                                        details: 'Setting default value: ' + currentFieldConfig.defaultValue + ' for field: ' + currentFieldConfig.targetFieldId
+                                    });
+
+                                    var toSetDefaultField = form.getField(currentFieldConfig.targetFieldId);
+
+                                    if (toSetDefaultField){
+                                        log.audit({
+                                            title: '_handleRest_BL',
+                                            details: 'Setting default '+currentFieldConfig.targetFieldId+' value as ' + currentFieldConfig.defaultValue
+                                        });
+
+                                        toSetDefaultField.defaultValue = currentFieldConfig.defaultValue
+                                    }
+
+
+                                }
+
+
+                            }
+                        }
+                    }
+                }
+            }
+
+            log.audit({
+                title: '_handleRest_BL',
+                details: 'START'
+            });
+        }
+
         function _handleRest(scriptContext) {
 
             var fieldsToClone = {};
@@ -25,11 +83,11 @@ define(['N/record', "N/search", 'N/runtime'],
                 targetFieldId: 'taxidnum',
                 copyIfEmpty: true
             });
-            var fieldsToSetADefaultFor = {};
-            fieldsToSetADefaultFor['item'] = [];
-            fieldsToSetADefaultFor['item'].push({
+            fieldsToClone['item'] = [];
+            fieldsToClone['item'].push({
+                sourceFieldId: 'custitem_h2gs_tax_sched_clone',
                 targetFieldId: 'taxschedule',
-                defaultValue: '2'
+                copyIfEmpty: true
             });
 
             var newRecord = scriptContext.newRecord;
@@ -57,11 +115,13 @@ define(['N/record', "N/search", 'N/runtime'],
                 }
             }
 
-            if (event == 'create' || event == 'edit'){
+            // not needed anymore. We moved this fix on before load since the rest it'a validating the record before running the
+            // user event before submitting the record
+            /*if (event == 'create' || event == 'edit'){
                 if ((executionContext == runtimeModule.ContextType.RESTWEBSERVICES) || (testFromUIActive)){
                     _handleFieldsDefaultValue(fieldsToSetADefaultFor, recordType, newRecord)
                 }
-            }
+            }*/
 
             log.audit({
                 title: '_handleRest',
@@ -145,7 +205,7 @@ define(['N/record', "N/search", 'N/runtime'],
         }
 
         return {
-            //beforeLoad: beforeLoad,
+            beforeLoad: _handleRest_BL,
             beforeSubmit: _handleRest,
             //afterSubmit: afterSubmit
         };

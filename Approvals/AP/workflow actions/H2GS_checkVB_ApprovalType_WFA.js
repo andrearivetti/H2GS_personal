@@ -4,6 +4,8 @@
  */
 define(['N/search','N/runtime'], function(searchModule, runtimeModule) {
 
+    // THIS SCRIPT IT'S DETERMINING THE APPROVAL TYPE IN THE WORKFLOWS
+    //
     function _handleWFAction(scriptContext) {
         log.audit({
             title: '_handleWFAction approval type',
