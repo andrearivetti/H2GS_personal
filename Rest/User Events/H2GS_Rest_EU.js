@@ -14,6 +14,11 @@ define(['N/record', "N/search", 'N/runtime'],
 
         function _handleRest_BL(scriptContext) {
 
+            log.audit({
+                title: '_handleRest_BL',
+                details: 'START'
+            });
+
             var fieldsToSetADefaultFor = {};
             fieldsToSetADefaultFor['item'] = [];
             fieldsToSetADefaultFor['item'].push({
@@ -38,7 +43,7 @@ define(['N/record', "N/search", 'N/runtime'],
                                 if (!newRecord.getValue(currentFieldConfig.targetFieldId)){
 
                                     log.audit({
-                                        title: '_handleRest',
+                                        title: '_handleRest_BL',
                                         details: 'Setting default value: ' + currentFieldConfig.defaultValue + ' for field: ' + currentFieldConfig.targetFieldId
                                     });
 
@@ -65,7 +70,7 @@ define(['N/record', "N/search", 'N/runtime'],
 
             log.audit({
                 title: '_handleRest_BL',
-                details: 'START'
+                details: 'END'
             });
         }
 
@@ -83,12 +88,12 @@ define(['N/record', "N/search", 'N/runtime'],
                 targetFieldId: 'taxidnum',
                 copyIfEmpty: true
             });
-            fieldsToClone['item'] = [];
+/*            fieldsToClone['item'] = [];
             fieldsToClone['item'].push({
                 sourceFieldId: 'custitem_h2gs_tax_sched_clone',
                 targetFieldId: 'taxschedule',
                 copyIfEmpty: true
-            });
+            });*/
 
             var newRecord = scriptContext.newRecord;
             var oldRecord = scriptContext.oldRecord;
